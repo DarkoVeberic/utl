@@ -14,8 +14,7 @@ DEPS := $(OBJS:.o=.P)
 define cxx_compile_with_dependency_creation
   $(COMPILE.cc) -MD -o $@ $<
   @sed -e 's|.*:|$*.o:|' <$*.d >$*.P
-  @sed -e 's/.*://' -e 's/\\$$//' <$*.d | fmt -1 | \
-    sed -e 's/^ *//' -e 's/$$/:/' >>$*.P
+  @sed -e 's/.*://' -e 's/\\$$//' <$*.d | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >>$*.P
   @rm -f $*.d
 endef
 
@@ -39,7 +38,8 @@ all: $(EXES)
 test_output: test_output.o $(OBJS)
 
 check: test_output
-	./test_output
+	./test_output input-1.dat expected_output-1.dat
+	./test_output input-2.dat expected_output-2.dat
 
 clean:
 	- $(RM) $(OBJS) $(addsuffix .o, $(EXES)) $(EXES) *.P
