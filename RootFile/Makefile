@@ -43,7 +43,7 @@ all: $(EXES)
 
 test_rootfile: test_rootfile.o $(OBJS)
 
-check:
+check: test_rootfile
 	./test_rootfile
 
 clean:
