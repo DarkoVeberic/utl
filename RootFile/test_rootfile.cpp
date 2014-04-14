@@ -5,6 +5,14 @@
 using namespace std;
 
 
+inline
+bool
+operator!=(const TestClass& t1, const TestClass& t2)
+{
+  return t1.fInt != t2.fInt || t1.fDouble != t2.fDouble || t1.fVec != t2.fVec;
+}
+
+
 int
 main()
 {
@@ -21,14 +29,16 @@ main()
     RootFile<TestClass> file("TestClass.root", 'r');
     for (unsigned int i = 0, n = file.GetNEntries(); i < n; ++i) {
       const TestClass& tc = file.GetEntry(i);
-      if (tc.fInt != int(i) || tc.fDouble != double(i) || tc.fVec != vector<int>(i, i))
+      const TestClass tt = { int(i), double(i), vector<int>(i, i) };
+      if (tc != tt)
         return 1;
     }
     unsigned int i = 0;
     for (RootFile<TestClass>::Iterator it = file.Begin(), end = file.End();
          it != end; ++it) {
       const TestClass& tc = *it;
-      if (tc.fInt != int(i) || tc.fDouble != double(i) || tc.fVec != vector<int>(i, i))
+      const TestClass tt = { int(i), double(i), vector<int>(i, i) };
+      if (tc != tt)
         return 2;
       ++i;
     }
