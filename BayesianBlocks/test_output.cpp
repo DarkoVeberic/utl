@@ -9,7 +9,7 @@ using namespace std;
 
 inline
 bool
-IsClose(const double a, const double b, const double eps = 1e-10)
+IsClose(const double a, const double b, const double eps = 1e-9)
 {
   return fabs(a - b) < eps;
 }
