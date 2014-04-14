@@ -1,0 +1,4 @@
+*.Dict.h
+*.Dict.cc
+*.root
+test_rootfile
