@@ -58,6 +58,14 @@ BayesianBlocks(const vector<double>& t /*sorted ascending*/)
       best[k] = max;
     }
   }
+  /*vector<unsigned int> change_points;
+  change_points.reserve(n);
+  for (unsigned int index = last[n-1]; index > 0; index = last[index-1])
+    change_points.push_back(index);
+  vector<double> ret;
+  ret.reserve(change_points.size());
+  for (int i = change_points.size()-1; i >= 0; --i)
+    ret.push_back(edges[change_points[i]]);*/
   vector<unsigned int> change_points(n);
   unsigned int i_cp = n;
   unsigned int ind = n;

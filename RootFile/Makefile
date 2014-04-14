@@ -1,3 +1,6 @@
+# GPLv2 and 2C-BSD
+# Copyright (c) Darko Veberic, 2014
+
 CPPFLAGS := -I. $(shell $(ROOTSYS)/bin/root-config --cflags)
 #CXXFLAGS := -Wall -Wextra -ggdb3 -O9 -march=native -mfpmath=sse -msse3 -ftree-vectorize -pipe -DNDEBUG
 #CXXFLAGS := -Wall -Wextra -ggdb3 -O0 -fno-inline -pipe

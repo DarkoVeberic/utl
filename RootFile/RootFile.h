@@ -2,10 +2,11 @@
 #define _RootFile_h_
 
 /*
-  GPLv2 and BSD
+  GPLv2 and 2C-BSD
   Copyright (c) Darko Veberic, 2014
 */
 
+#include "SaveCurrentTDirectory.h"
 #include <TFile.h>
 #include <TTree.h>
 #include <string>
@@ -96,7 +97,9 @@ public:
   {
     if (!fFile || !fFile->IsWritable())
       throw std::runtime_error("fill error");
-    fEntryBuffer->Clear();
+    // NB: maybe this can be skipped
+    //fEntryBuffer->Clear();
+    // NB: assigment should made sure to cover all members
     *fEntryBuffer = entry;
     fTree->Fill();
   }
@@ -123,6 +126,7 @@ private:
   void
   OpenForRead(const std::string& filename)
   {
+    const SaveCurrentTDirectory save;
     fFile = new TFile(filename.c_str(), "read");
     CheckFileIsOpen();
     fTree = (TTree*)fFile->Get((std::string(Entry::Class_Name()) + "Tree").c_str());
@@ -138,9 +142,10 @@ private:
   void
   OpenForWrite(const std::string& filename)
   {
+    const SaveCurrentTDirectory save;
     fFile = new TFile(filename.c_str(), "recreate", "", 9);
     CheckFileIsOpen();
-    fFile->cd();
+    //fFile->cd();
     const std::string treeName = std::string(Entry::Class_Name()) + "Tree";
     fTree = new TTree(treeName.c_str(), treeName.c_str());
     fEntryBuffer = new Entry;
@@ -168,9 +173,6 @@ private:
   TFile* fFile;
   TTree* fTree;
   Entry* fEntryBuffer;
-
-  static const char* const kTrackTreeName;
-  static const char* const kMuonTrackBranchName;
 };
 
 
