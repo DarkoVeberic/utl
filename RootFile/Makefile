@@ -2,17 +2,15 @@
 # Copyright (c) Darko Veberic, 2014
 
 CPPFLAGS := -I. $(shell $(ROOTSYS)/bin/root-config --cflags)
-#CXXFLAGS := -Wall -Wextra -ggdb3 -O9 -march=native -mfpmath=sse -msse3 -ftree-vectorize -pipe -DNDEBUG
-#CXXFLAGS := -Wall -Wextra -ggdb3 -O0 -fno-inline -pipe
-CXXFLAGS := -Wall -Wextra -ggdb3 -O2 -pipe
-#CXXFLAGS := -Wall -Wextra -Wtype-limits -ggdb3 -O9 -march=native -mfpmath=sse -msse3 -ftree-vectorize -pipe
+CXXFLAGS := -Wall -Wextra -ggdb3 -O0 -fno-inline -pipe
+#CXXFLAGS := -Wall -Wextra -ggdb3 -O2 -pipe
 LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs) -lMathMore -lMinuit
 
 SUFFIXES := .o .cc .cpp
 
 EXES := $(basename $(wildcard *.cpp))
-OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) TestClass.Dict.o
-DEPS := $(OBJS:.o=.P) $(patsubst %.cpp, %.P, $(wildcard *.cpp))
+OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) $(patsubst %.LinkDef.h, %.Dict.o, $(wildcard *.LinkDef.h))
+DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix %.P, $(EXES))
 
 define cxx_compile_with_dependency_creation
   $(COMPILE.cc) -MD -o $@ $<

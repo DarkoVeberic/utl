@@ -21,35 +21,47 @@ operator!=(const TestClass& t1, const TestClass& t2)
 int
 main()
 {
+  unsigned int count = 0;
   {
-    // write a root file
-    RootFile<TestClass> file("TestClass.root", 'w');
-    for (unsigned int i = 0; i < 10; ++i) {
-      const TestClass tc = { int(i), double(i), vector<int>(i, i) };
-      file.Fill(tc);
+    // write root files
+    for (unsigned int i = 0; i < 5; ++i) {
+      RootFile<TestClass> file(string("TestClass-") + string(1, char('0'+i)) + ".root", 'w');
+      for (unsigned int i = 0; i < 10; ++i) {
+        const TestClass tc = { int(count), double(count), vector<int>(count, count) };
+        file.Fill(tc);
+        ++count;
+      }
     }
-    file.Close();
   }
 
   {
-    // read it, random access
-    RootFile<TestClass> file("TestClass.root", 'r');
-    for (unsigned int i = 0, n = file.GetNEntries(); i < n; ++i) {
+    // read root files, random access
+    RootFile<TestClass> file("TestClass-*.root", 'r');
+    const unsigned int n = file.GetNEntries();
+    if (n != count)
+      return 1;
+    for (unsigned int i = 0; i < n; ++i) {
       const TestClass& tc = file.GetEntry(i);
       const TestClass tt = { int(i), double(i), vector<int>(i, i) };
       if (tc != tt)
-        return 1;
+        return 2;
     }
-    // read it, forward iterator
+  }
+
+  {
+    // read root files, forward iterator
+    RootFile<TestClass> file("TestClass-*.root", 'r');
     unsigned int i = 0;
     for (RootFile<TestClass>::Iterator it = file.Begin(), end = file.End();
          it != end; ++it) {
       const TestClass& tc = *it;
       const TestClass tt = { int(i), double(i), vector<int>(i, i) };
       if (tc != tt)
-        return 2;
+        return 3;
       ++i;
     }
+    if (i != count)
+      return 4;
   }
 
   return 0;

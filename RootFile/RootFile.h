@@ -9,6 +9,7 @@
 #include "SaveCurrentTDirectory.h"
 #include <TFile.h>
 #include <TTree.h>
+#include <TChain.h>
 #include <string>
 #include <stdexcept>
 
@@ -26,7 +27,7 @@ public:
     typedef std::forward_iterator_tag iterator_category;
 
     Iterator(RootFile& file, unsigned int index) : fFile(file), fIndex(index) { }
-    Iterator& operator++() { ++fIndex; return *this; } // prefix
+    Iterator& operator++() { ++fIndex; return *this; } // prefix ++it
     const Entry& operator*() { return fFile.GetEntry(fIndex); }
     const Entry* operator->() { return &operator*(); }
     bool operator==(const Iterator& it) const { IsSameFile(it); return fIndex == it.fIndex; }
@@ -47,6 +48,7 @@ public:
   RootFile(const std::string& filename, const char mode) :
     fFile(0),
     fTree(0),
+    fChain(0),
     fEntryBuffer(0)
   {
     if (mode == 'r')
@@ -54,52 +56,41 @@ public:
     else if (mode == 'w')
       OpenForWrite(filename);
     else
-      throw std::invalid_argument("illegal char in 'mode'");
+      Error("illegal char in 'mode'");
   }
 
-  ~RootFile()
-  {
-    Close();
-    delete fEntryBuffer;
-  }
+  ~RootFile() { Close(); }
 
-  bool IsOpen() const { return fFile && fFile->IsOpen(); }
-
-  unsigned int GetNEntries() const
-  { return fTree ? fTree->GetEntriesFast() : 0; }
+  unsigned int GetNEntries()
+  { return fChain ? fChain->GetEntries() : 0; }
 
   const Entry&
   GetEntry(const unsigned int i)
-    const
   {
-    CheckIsReadable();
-    if (!fTree->GetEntry(i))
-      throw std::logic_error("write only or no entry found");
+    CheckForReading();
+    if (!fChain->GetEntry(i))
+      Error("write only or no entry found");
     return *fEntryBuffer;
   }
 
   Iterator
   Begin()
   {
-    CheckIsReadable();
+    CheckForReading();
     return Iterator(*this, 0);
   }
 
   Iterator
   End()
   {
-    CheckIsReadable();
+    CheckForReading();
     return Iterator(*this, GetNEntries());
   }
 
   void
   Fill(const Entry& entry)
   {
-    if (!fFile || !fFile->IsWritable())
-      throw std::runtime_error("fill error");
-    // NB: maybe this can be skipped
-    //fEntryBuffer->Clear();
-    // NB: assigment should made sure to cover all members
+    CheckForWriting();
     *fEntryBuffer = entry;
     fTree->Fill();
   }
@@ -107,15 +98,20 @@ public:
   void
   Close()
   {
-    if (!fFile)
-      return;
-    if (fTree && fFile->IsWritable()) {
+    if (fFile && fFile->IsWritable() && fTree) {
+      const SaveCurrentTDirectory save;
       fFile->cd();
       fTree->Write();
+      fFile->Close();
+      delete fFile;
+      fFile = 0;
+      //delete fTree;  // broken ROOT memory management
+      fTree = 0;
     }
-    fFile->Close();
-    delete fFile;
-    fFile = 0;
+    delete fEntryBuffer;
+    fEntryBuffer = 0;
+    delete fChain;
+    fChain = 0;
   }
 
 private:
@@ -124,54 +120,59 @@ private:
   RootFile& operator=(const RootFile&);
 
   void
+  Error(const char* const message)
+  {
+    Close();
+    throw std::runtime_error(message);
+  }
+
+  void
   OpenForRead(const std::string& filename)
   {
     const SaveCurrentTDirectory save;
-    fFile = new TFile(filename.c_str(), "read");
-    CheckFileIsOpen();
-    fTree = (TTree*)fFile->Get((std::string(Entry::Class_Name()) + "Tree").c_str());
-    if (!fTree) {
-      delete fFile;
-      fFile = 0;
-      throw std::runtime_error("cannot find tree");
-    }
+    fChain = new TChain((std::string(Entry::Class_Name()) + "Tree").c_str());
+    const int nFiles = fChain->Add(filename.c_str());
+    if (!nFiles)
+      Error("no files found");
     fEntryBuffer = new Entry;
-    fTree->SetBranchAddress(std::string(Entry::Class_Name()).c_str(), &fEntryBuffer);
+    fChain->SetBranchAddress(Entry::Class_Name(), &fEntryBuffer);
+    CheckForReading();
   }
 
   void
   OpenForWrite(const std::string& filename)
   {
     const SaveCurrentTDirectory save;
-    fFile = new TFile(filename.c_str(), "recreate", "", 9);
-    CheckFileIsOpen();
-    //fFile->cd();
+    fFile = new TFile(filename.c_str(), "recreate", "", /*compression level*/9);
     const std::string treeName = std::string(Entry::Class_Name()) + "Tree";
     fTree = new TTree(treeName.c_str(), treeName.c_str());
     fEntryBuffer = new Entry;
     fTree->Branch(Entry::Class_Name(), Entry::Class_Name(), &fEntryBuffer, 16000, 99);
+    CheckForWriting();
   }
 
   void
-  CheckFileIsOpen()
+  CheckForReading()
   {
-    if (!fFile || fFile->IsZombie() || !fFile->IsOpen()) {
-      delete fFile;
-      fFile = 0;
-      throw std::runtime_error("file open failed");
-    }
+    if (fFile || fTree || !fChain || !fEntryBuffer)
+      Error("write only or no entry found");
   }
 
   void
-  CheckIsReadable()
-    const
+  CheckForWriting()
   {
-    if (!fFile || fFile->IsWritable() || !fTree)
-      throw std::logic_error("write only or no entry found");
+    const char* err = 0;
+    if (!fFile || fFile->IsZombie() || !fFile->IsOpen())
+      err = "file open failed";
+    if (!fTree || !fEntryBuffer)
+      err = "tree error";
+    if (err)
+      Error(err);
   }
 
-  TFile* fFile;
-  TTree* fTree;
+  TFile* fFile;   // only for writing
+  TTree* fTree;   // only for writing
+  TChain* fChain; // only for reading
   Entry* fEntryBuffer;
 };
 
