@@ -2,18 +2,19 @@ RootFile
 ===
 
 `RootFile<T>` is a simple templated class that elegantly handles
-reading/writing of root files containing only one [ROOT](http://root.cern.ch)
-branch of class `T`. Since `T` can be arbitrarily complex and may contain
-sub-classes, any event-like structure can be streamed into a ROOT file in this
-way.
+reading/writing of [ROOT](http://root.cern.ch) files containing only one branch
+of class `T`. Since `T` can be arbitrarily complex and may contain sub-classes,
+any event-like structure can be streamed into a ROOT file in this way.
 
 Check the `test_rootfile.cpp` file for more details.
+
+
 
 ## Usage
 
 For example, making a root file with a collection of streamable instances of
-clas `Event` (i.e. with the `ClassDef()` macro and corresponding link-def
-`#pragma`s) is as easy as:
+class `Event` (i.e. with the `ClassDef()` macro and corresponding link-def
+`#pragma`) is as easy as:
 ```c++
 RootFile<Event> file("events.root", 'w');
 for (...) {
@@ -30,7 +31,7 @@ const Event& ev = file.GetEntry(i);
 
 Looping over entries can be done in two ways, random index access:
 ```c++
-for(unsigned int i = 0, n = file.GetNEntries(); i < n; ++i) {
+for (unsigned int i = 0, n = file.GetNEntries(); i < n; ++i) {
   const Event& ev = file.GetEntry(i);
   ...
 }
