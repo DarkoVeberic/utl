@@ -19,20 +19,20 @@ class `Event` (i.e. with the `ClassDef()` macro and corresponding link-def
 RootFile<Event> file("events.root", 'w');
 for (...) {
   const Event ev = ...;
-  file.Fill(ev);
+  file << ev;
 }
 ```
 
 Reading-out arbitray entry is similarly easy:
 ```c++
 RootFile<Event> file("events.root", 'r');
-const Event& ev = file.GetEntry(i);
+const Event& ev = file[i];
 ```
 
 Looping over entries can be done in two ways, random index access:
 ```c++
 for (unsigned int i = 0, n = file.GetNEntries(); i < n; ++i) {
-  const Event& ev = file.GetEntry(i);
+  const Event& ev = file[i];
   ...
 }
 ```

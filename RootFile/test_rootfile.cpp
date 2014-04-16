@@ -28,7 +28,7 @@ main()
       RootFile<TestClass> file(string("TestClass-") + string(1, char('0'+i)) + ".root", 'w');
       for (unsigned int i = 0; i < 10; ++i) {
         const TestClass tc = { int(count), double(count), vector<int>(count, count) };
-        file.Fill(tc);
+        file << tc;
         ++count;
       }
     }
@@ -37,11 +37,11 @@ main()
   {
     // read root files, random access
     RootFile<TestClass> file("TestClass-*.root", 'r');
-    const unsigned int n = file.GetNEntries();
+    const unsigned int n = file.GetSize();
     if (n != count)
       return 1;
     for (unsigned int i = 0; i < n; ++i) {
-      const TestClass& tc = file.GetEntry(i);
+      const TestClass& tc = file[i];
       const TestClass tt = { int(i), double(i), vector<int>(i, i) };
       if (tc != tt)
         return 2;

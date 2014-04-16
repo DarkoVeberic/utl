@@ -28,7 +28,7 @@ public:
 
     Iterator(RootFile& file, unsigned int index) : fFile(file), fIndex(index) { }
     Iterator& operator++() { ++fIndex; return *this; } // prefix ++it
-    const Entry& operator*() { return fFile.GetEntry(fIndex); }
+    const Entry& operator*() { return fFile[fIndex]; }
     const Entry* operator->() { return &operator*(); }
     bool operator==(const Iterator& it) const { IsSameFile(it); return fIndex == it.fIndex; }
     bool operator!=(const Iterator& it) const { IsSameFile(it); return !operator==(it); }
@@ -61,15 +61,19 @@ public:
 
   ~RootFile() { Close(); }
 
-  unsigned int GetNEntries()
-  { return fChain ? fChain->GetEntries() : 0; }
+  unsigned int
+  GetSize()
+  {
+    CheckForReading();
+    return fChain->GetEntries();
+  }
 
   const Entry&
-  GetEntry(const unsigned int i)
+  operator[](const unsigned int i)
   {
     CheckForReading();
     if (!fChain->GetEntry(i))
-      Error("write only or no entry found");
+      throw std::out_of_range("no entry found");
     return *fEntryBuffer;
   }
 
@@ -84,7 +88,7 @@ public:
   End()
   {
     CheckForReading();
-    return Iterator(*this, GetNEntries());
+    return Iterator(*this, GetSize());
   }
 
   void
@@ -94,6 +98,8 @@ public:
     *fEntryBuffer = entry;
     fTree->Fill();
   }
+
+  void operator<<(const Entry& entry) { Fill(entry); }
 
   void
   Close()

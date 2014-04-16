@@ -8,9 +8,11 @@ LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs)
 
 SUFFIXES := .o .cc .cpp
 
+LDEFS := $(wildcard *.LinkDef.h)
 EXES := $(basename $(wildcard *.cpp))
-OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) $(patsubst %.LinkDef.h, %.Dict.o, $(wildcard *.LinkDef.h))
+OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) $(patsubst %.LinkDef.h, %.Dict.o, $(LDEFS))
 DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix %.P, $(EXES))
+.PRECIOUS: $(patsubst %.LinkDef.h, %.Dict.h, $(LDEFS)) $(patsubst %.LinkDef.h, %.Dict.cc, $(LDEFS))
 
 define cxx_compile_with_dependency_creation
   $(COMPILE.cc) -MD -o $@ $<
@@ -35,16 +37,17 @@ endef
 %.Dict.cc %.Dict.h: %.h %.LinkDef.h
 	$(ROOTSYS)/bin/rootcint -v4 -f $@ -c -I. $^
 
-.PHONY: all check
-
+.PHONY: all
 all: $(EXES)
 
 test_rootfile: test_rootfile.o $(OBJS)
 
+.PHONY: check
 check: test_rootfile
 	./test_rootfile
 
+.PHONY: clean
 clean:
-	- $(RM) $(OBJS) *.Dict.cc *.Dict.h $(addsuffix .o, $(EXES)) $(EXES) *.P
+	- $(RM) $(OBJS) *.Dict.cc *.Dict.h $(addsuffix .o, $(EXES)) $(EXES) *.P TestClass-*.root
 
 -include $(DEPS)
