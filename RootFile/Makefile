@@ -2,9 +2,9 @@
 # Copyright (c) Darko Veberic, 2014
 
 CPPFLAGS := -I. $(shell $(ROOTSYS)/bin/root-config --cflags)
-CXXFLAGS := -Wall -Wextra -ggdb3 -O0 -fno-inline -pipe
-#CXXFLAGS := -Wall -Wextra -ggdb3 -O2 -pipe
-LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs) -lMathMore -lMinuit
+#CXXFLAGS := -Wall -Wextra -ggdb3 -O0 -fno-inline -pipe
+CXXFLAGS := -Wall -Wextra -ggdb3 -O2 -pipe
+LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs)
 
 SUFFIXES := .o .cc .cpp
 
