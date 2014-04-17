@@ -1,10 +1,11 @@
 RootFile
 ===
 
-`RootFile<T>` is a simple templated class that elegantly handles
-reading/writing of [ROOT](http://root.cern.ch) files containing only one branch
-of class `T`. Since `T` can be arbitrarily complex and may contain sub-classes,
-any event-like structure can be streamed into a ROOT file in this way.
+`RootInFile<T>` and `RootOutFile<T>` are two simple templated classes that
+elegantly handle reading/writing of [ROOT](http://root.cern.ch) files
+containing only one branch of class `T`. Since `T` can be arbitrarily complex
+and may contain sub-classes, any event-like structure can be streamed into a
+ROOT file in this way.
 
 Check the `test_rootfile.cpp` file for more details.
 
@@ -16,29 +17,29 @@ For example, making a root file with a collection of streamable instances of
 class `Event` (i.e. with the `ClassDef()` macro and corresponding link-def
 `#pragma`) is as easy as:
 ```c++
-RootFile<Event> file("events.root", 'w');
+RootOutFile<Event> ofile("events.root");
 for (...) {
   const Event ev = ...;
-  file << ev;
+  ofile << ev;
 }
 ```
 
 Reading-out arbitray entry is similarly easy:
 ```c++
-RootFile<Event> file("events.root", 'r');
-const Event& ev = file[i];
+RootInFile<Event> ifile("events.root");
+const Event& ev = ifile[i];
 ```
 
 Looping over entries can be done in two ways, random index access:
 ```c++
-for (unsigned int i = 0, n = file.GetNEntries(); i < n; ++i) {
-  const Event& ev = file[i];
+for (unsigned int i = 0, n = ifile.GetNEntries(); i < n; ++i) {
+  const Event& ev = ifile[i];
   ...
 }
 ```
 or with iterators:
 ```c++
-for (RootFile<Event>::Iterator it = file.Begin(), end = file.End();
+for (RootInFile<Event>::Iterator it = ifile.Begin(), end = ifile.End();
      it != end; ++it) {
   const Event& ev = *it;
   ...
@@ -50,5 +51,5 @@ Note that the reading of the root file is instead of the
 [`TChain`](http://root.cern.ch/root/html/TChain.html) so globbing in file name
 chains files together to give seamless collection of objects:
 ```c++
-RootFile<Event> file("event-*.root", 'r');
+RootInFile<Event> ifile("event-*.root");
 ```
