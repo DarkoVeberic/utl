@@ -25,7 +25,7 @@ main()
   {
     // write root files
     for (unsigned int i = 0; i < 5; ++i) {
-      RootFile<TestClass> file(string("TestClass-") + string(1, char('0'+i)) + ".root", 'w');
+      RootOutFile<TestClass> file(string("TestClass-") + string(1, char('0'+i)) + ".root");
       for (unsigned int i = 0; i < 10; ++i) {
         const TestClass tc = { int(count), double(count), vector<int>(count, count) };
         file << tc;
@@ -36,7 +36,7 @@ main()
 
   {
     // read root files, random access
-    RootFile<TestClass> file("TestClass-*.root", 'r');
+    RootInFile<TestClass> file("TestClass-*.root");
     const unsigned int n = file.GetSize();
     if (n != count)
       return 1;
@@ -50,9 +50,9 @@ main()
 
   {
     // read root files, forward iterator
-    RootFile<TestClass> file("TestClass-*.root", 'r');
+    RootInFile<TestClass> file("TestClass-*.root");
     unsigned int i = 0;
-    for (RootFile<TestClass>::Iterator it = file.Begin(), end = file.End();
+    for (RootInFile<TestClass>::Iterator it = file.Begin(), end = file.End();
          it != end; ++it) {
       const TestClass& tc = *it;
       const TestClass tt = { int(i), double(i), vector<int>(i, i) };
