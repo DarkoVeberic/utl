@@ -11,6 +11,14 @@ Check the `test_rootfile.cpp` file for more details.
 
 
 
+## Description
+
+The `RootInFile<T>` and `RootOutFile<T>` are best described as persistent
+version of the `std::vector<T>` container using the ROOT streaming machinery.
+This should be obvious from the usage example given below.
+
+
+
 ## Usage
 
 For example, making a root file with a collection of streamable instances of
@@ -53,3 +61,9 @@ chains files together to give seamless collection of objects:
 ```c++
 RootInFile<Event> ifile("event-*.root");
 ```
+
+
+
+## License
+
+Released under dual licence: the GPL version 2 and the two-clause BSD license.
