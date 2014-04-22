@@ -8,11 +8,11 @@ LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs)
 
 SUFFIXES := .o .cc .cpp
 
-LDEFS := $(wildcard *.LinkDef.h)
 EXES := $(basename $(wildcard *.cpp))
-OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) $(patsubst %.LinkDef.h, %.Dict.o, $(LDEFS))
-DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix %.P, $(EXES))
-.PRECIOUS: $(patsubst %.LinkDef.h, %.Dict.h, $(LDEFS)) $(patsubst %.LinkDef.h, %.Dict.cc, $(LDEFS))
+LINKDEFS := $(patsubst %.LinkDef.h, %, $(wildcard *.LinkDef.h))
+OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) $(addsuffix .Dict.o, $(LINKDEFS))
+DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix .P, $(EXES))
+.PRECIOUS: $(addsuffix .Dict.h, $(LINKDEFS)) $(addsuffix .Dict.cc, $(LINKDEFS))
 
 define cxx_compile_with_dependency_creation
   $(COMPILE.cc) -MD -o $@ $<
@@ -43,11 +43,11 @@ all: $(EXES)
 test_rootfile: test_rootfile.o $(OBJS)
 
 .PHONY: check
-check: test_rootfile
-	./test_rootfile
+check: $(basename $(wildcard test_*.cpp))
+	for t in $^ ; do ./$$t || exit $$? ; done
 
 .PHONY: clean
 clean:
-	- $(RM) $(OBJS) *.Dict.cc *.Dict.h $(addsuffix .o, $(EXES)) $(EXES) *.P TestClass-*.root
+	- $(RM) $(OBJS) *.Dict.cc *.Dict.h $(addsuffix .o, $(EXES)) $(EXES) $(DEPS) TestClass-*.root
 
 -include $(DEPS)
