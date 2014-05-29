@@ -40,47 +40,48 @@ def zopen(filename, mode='r', buff=1024*1024, external=PARALLEL):
             return bz2.BZ2File(filename, mode, buff)
         elif external == PROCESS:
             if not which('bzip2'):
-                return anyOpen(filename, mode, buff, NORMAL)
+                return zopen(filename, mode, buff, NORMAL)
             if 'r' in mode:
-                return anyOpen('!bzip2 -dc ' + filename, mode, buff)
+                return zopen('!bzip2 -dc ' + filename, mode, buff)
             elif 'w' in mode:
-                return anyOpen('!bzip2 >' + filename, mode, buff)
+                return zopen('!bzip2 >' + filename, mode, buff)
         elif external == PARALLEL:
             if not which('pbzip2'):
-                return anyOpen(filename, mode, buff, PROCESS)
+                return zopen(filename, mode, buff, PROCESS)
             if 'r' in mode:
-                return anyOpen('!pbzip2 -dc ' + filename, mode, buff)
+                return zopen('!pbzip2 -dc ' + filename, mode, buff)
             elif 'w' in mode:
-                return anyOpen('!pbzip2 >' + filename, mode, buff)
+                return zopen('!pbzip2 >' + filename, mode, buff)
     elif filename.endswith('.gz'):
         if external == NORMAL:
             import gzip
             return gzip.GzipFile(filename, mode, buff)
         elif external == PROCESS:
             if not which('gzip'):
-                return anyOpen(filename, mode, buff, NORMAL)
+                return zopen(filename, mode, buff, NORMAL)
             if 'r' in mode:
-                return anyOpen('!gzip -dc ' + filename, mode, buff)
+                return zopen('!gzip -dc ' + filename, mode, buff)
             elif 'w' in mode:
-                return anyOpen('!gzip >' + filename, mode, buff)
+                return zopen('!gzip >' + filename, mode, buff)
         elif external == PARALLEL:
             if not which('pigz'):
-                return anyOpen(filename, mode, buff, PROCESS)
+                return zopen(filename, mode, buff, PROCESS)
             if 'r' in mode:
-                return anyOpen('!pigz -dc ' + filename, mode, buff)
+                return zopen('!pigz -dc ' + filename, mode, buff)
             elif 'w' in mode:
-                return anyOpen('!pigz >' + filename, mode, buff)
+                return zopen('!pigz >' + filename, mode, buff)
     elif filename.endswith('.xz'):
         if which('xz'):
             if 'r' in mode:
-                return anyOpen('!xz -dc ' + filename, mode, buff)
+                return zopen('!xz -dc ' + filename, mode, buff)
             elif 'w' in mode:
-                return anyOpen('!xz >' + filename, mode, buff)
+                return zopen('!xz >' + filename, mode, buff)
     else:
         return open(filename, mode, buff)
     return None
 
 
+# add iterators to the pickle file so it can be used as a object container
 def pickle_loader(pklFile):
     import cPickle as pkl
     try:
