@@ -81,7 +81,7 @@ def zopen(filename, mode='r', buff=1024*1024, external=PARALLEL):
     return None
 
 
-def pickleLoader(pklFile):
+def pickle_loader(pklFile):
     import cPickle as pkl
     try:
         while True:
@@ -91,7 +91,7 @@ def pickleLoader(pklFile):
 
 
 # t is in seconds
-def niceTime(t):
+def nice_time(t):
     div = (60., 60., 24., 365.25)
     unit = ('', 's', 'min', 'h', 'day', 'year')
     sign = 1 if t >= 0 else -1
