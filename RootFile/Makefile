@@ -6,9 +6,9 @@ CPPFLAGS := -I. $(shell $(ROOTSYS)/bin/root-config --cflags)
 CXXFLAGS := -Wall -Wextra -ggdb3 -O2 -pipe
 LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs)
 
-SUFFIXES := .o .cc .cpp
+SUFFIXES := .o .cc .cxx
 
-EXES := $(basename $(wildcard *.cpp))
+EXES := $(basename $(wildcard *.cxx))
 LINKDEFS := $(patsubst %.LinkDef.h, %, $(wildcard *.LinkDef.h))
 OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) $(addsuffix .Dict.o, $(LINKDEFS))
 DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix .P, $(EXES))
@@ -28,7 +28,7 @@ endef
 %.o: %.cc
 	$(call cxx_compile_with_dependency_creation)
 
-%.o: %.cpp
+%.o: %.cxx
 	$(call cxx_compile_with_dependency_creation)
 
 %: %.o
@@ -43,11 +43,11 @@ all: $(EXES)
 test_rootfile: test_rootfile.o $(OBJS)
 
 .PHONY: check
-check: $(basename $(wildcard test_*.cpp))
+check: $(basename $(wildcard test_*.cxx))
 	for t in $^ ; do ./$$t || exit $$? ; done
 
 .PHONY: clean
 clean:
-	- $(RM) $(OBJS) *.Dict.cc *.Dict.h $(addsuffix .o, $(EXES)) $(EXES) $(DEPS) TestClass-*.root
+	- $(RM) $(OBJS) *.Dict.cc *.Dict.h $(addsuffix .o, $(EXES)) $(EXES) $(DEPS) TestFile-*.root
 
 -include $(DEPS)

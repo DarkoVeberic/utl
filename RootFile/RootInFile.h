@@ -8,6 +8,8 @@
 
 #include "SaveCurrentTDirectory.h"
 #include <TChain.h>
+#include <TChainElement.h>
+#include <TFile.h>
 #include <string>
 #include <stdexcept>
 
@@ -80,6 +82,22 @@ public:
   {
     Check();
     return Iterator(*this, GetSize());
+  }
+
+  template<class T>
+  const T&
+  Get()
+  {
+    TObjArray* files;
+    if (!fChain || !(files = fChain->GetListOfFiles()))
+      Error("file not open");
+    const T* obj = 0;
+    TIter next(files);
+    for (TChainElement* c = (TChainElement*)next(); !obj && c; c = (TChainElement*)next())
+      TFile(c->GetTitle()).GetObject(T::Class_Name(), obj);
+    if (!obj)
+      Error((std::string("no object '") + T::Class_Name() + "' found in file").c_str());
+    return *obj;
   }
 
   void

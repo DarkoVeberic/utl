@@ -11,6 +11,7 @@
 #pragma link off all functions;
 
 #pragma link C++ class TestClass+;
+#pragma link C++ class AnotherTestClass+;
 
 
 #endif

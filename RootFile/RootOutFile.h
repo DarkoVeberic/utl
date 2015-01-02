@@ -36,6 +36,15 @@ public:
 
   void operator<<(const Entry& entry) { Fill(entry); }
 
+  template<class T>
+  void
+  Write(const T& obj)
+  {
+    if (!fFile)
+      Error("file not open");
+    fFile->WriteObject(&obj, obj.Class_Name());
+  }
+
   void
   Close()
   {
