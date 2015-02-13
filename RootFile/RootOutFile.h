@@ -51,7 +51,7 @@ public:
     if (fFile && fFile->IsWritable() && fTree) {
       const SaveCurrentTDirectory save;
       fFile->cd();
-      fTree->Write();
+      fTree->Write(0, TObject::kOverwrite);
       fFile->Close();
       delete fFile;
       fFile = 0;
@@ -78,11 +78,11 @@ private:
   Open(const std::string& filename)
   {
     const SaveCurrentTDirectory save;
-    fFile = new TFile(filename.c_str(), "recreate", "", /*compression level*/9);
+    fFile = new TFile(filename.c_str(), "recreate", "", /*compression*/9);
     const std::string treeName = std::string(Entry::Class_Name()) + "Tree";
     fTree = new TTree(treeName.c_str(), treeName.c_str());
     fEntryBuffer = new Entry;
-    fTree->Branch(Entry::Class_Name(), Entry::Class_Name(), &fEntryBuffer, 16000, 99);
+    fTree->Branch(Entry::Class_Name(), Entry::Class_Name(), &fEntryBuffer, 1<<20, 1);
     Check();
   }
 
