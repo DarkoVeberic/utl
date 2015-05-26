@@ -1,4 +1,6 @@
 *.Dict.h
 *.Dict.cc
 *.root
+lib*.so
+.root_hist
 test_rootfile
