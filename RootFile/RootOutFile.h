@@ -16,12 +16,12 @@
 template<class Entry>
 class RootOutFile {
 public:
-  RootOutFile(const std::string& filename) :
+  RootOutFile(const std::string& filename, const int compression = 1) :
     fFile(0),
     fTree(0),
     fEntryBuffer(0)
   {
-    Open(filename);
+    Open(filename, compression);
   }
 
   ~RootOutFile() { Close(); }
@@ -75,10 +75,10 @@ private:
   }
 
   void
-  Open(const std::string& filename)
+  Open(const std::string& filename, const int compression)
   {
     const SaveCurrentTDirectory save;
-    fFile = new TFile(filename.c_str(), "recreate", "", /*compression*/9);
+    fFile = new TFile(filename.c_str(), "recreate", "", compression);
     const std::string treeName = std::string(Entry::Class_Name()) + "Tree";
     fTree = new TTree(treeName.c_str(), treeName.c_str());
     fEntryBuffer = new Entry;
