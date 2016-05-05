@@ -19,7 +19,8 @@ public:
   RootOutFile(const std::string& filename, const int compression = 1) :
     fFile(0),
     fTree(0),
-    fEntryBuffer(0)
+    fBranch(0),
+    fEntryPtr(0)
   {
     Open(filename, compression);
   }
@@ -29,8 +30,8 @@ public:
   void
   Fill(const Entry& entry)
   {
+    fEntryPtr = &entry;
     Check();
-    *fEntryBuffer = entry;
     fTree->Fill();
   }
 
@@ -58,8 +59,7 @@ public:
       //delete fTree;  // broken ROOT memory management
       fTree = 0;
     }
-    delete fEntryBuffer;
-    fEntryBuffer = 0;
+    fEntryPtr = 0;
   }
 
 private:
@@ -81,8 +81,8 @@ private:
     fFile = new TFile(filename.c_str(), "recreate", "", compression);
     const std::string treeName = std::string(Entry::Class_Name()) + "Tree";
     fTree = new TTree(treeName.c_str(), treeName.c_str());
-    fEntryBuffer = new Entry;
-    fTree->Branch(Entry::Class_Name(), Entry::Class_Name(), &fEntryBuffer, 1<<22);
+    fEntryPtr = 0;
+    fTree->Branch(Entry::Class_Name(), Entry::Class_Name(), &fEntryPtr, 900000);
     Check();
   }
 
@@ -92,7 +92,7 @@ private:
     const char* err = 0;
     if (!fFile || fFile->IsZombie() || !fFile->IsOpen())
       err = "file open failed";
-    if (!fTree || !fEntryBuffer)
+    if (!fTree || !fEntryPtr)
       err = "tree error";
     if (err)
       Error(err);
@@ -100,7 +100,8 @@ private:
 
   TFile* fFile;
   TTree* fTree;
-  Entry* fEntryBuffer;
+  TBranch* fBranch;
+  const Entry* fEntryPtr;
 };
 
 
