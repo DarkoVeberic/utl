@@ -1,18 +1,29 @@
 # GPLv2 and 2C-BSD
 # Copyright (c) Darko Veberic, 2014
 
+ifndef ROOTSYS
+  # try system default
+  ROOTSYS := /usr
+endif
+
 CPPFLAGS := -I. $(shell $(ROOTSYS)/bin/root-config --cflags)
 #CXXFLAGS := -Wall -Wextra -ggdb3 -O0 -fno-inline -pipe
 CXXFLAGS := -Wall -Wextra -ggdb3 -O2 -fPIC -pipe
 LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs)
 
+SHELL := bash
 SUFFIXES := .o .cc .cxx
 
+VPATH := . io
+
 EXES := $(basename $(wildcard *.cxx))
+OBJS := $(foreach d, $(VPATH), $(patsubst %.cc, %.o, $(wildcard $(d)/*.cc)))
+
 LINKDEFS := $(patsubst %.LinkDef.h, %, $(wildcard *.LinkDef.h))
-OBJS := $(patsubst %.cc, %.o, $(wildcard *.cc)) $(addsuffix .Dict.o, $(LINKDEFS))
-DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix .P, $(EXES))
+OBJS += $(addsuffix .Dict.o, $(LINKDEFS))
 .PRECIOUS: $(addsuffix .Dict.h, $(LINKDEFS)) $(addsuffix .Dict.cc, $(LINKDEFS))
+
+DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix .P, $(EXES))
 
 define cxx_compile_with_dependency_creation
   $(COMPILE.cc) -MD -o $@ $<
@@ -22,7 +33,7 @@ define cxx_compile_with_dependency_creation
 endef
 
 define cxx_link_rule
-  $(CXX) $^ $(LDFLAGS) -o $@
+  $(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 endef
 
 %.o: %.cc
@@ -44,10 +55,10 @@ test_rootfile: test_rootfile.o $(OBJS)
 
 .PHONY: check
 check: $(basename $(wildcard test_*.cxx))
-	for t in $^ ; do ./$$t || exit $$? ; done
+	for t in $^ ; do echo check: run $$t ; ./$$t || exit $$? ; done
 
 .PHONY: clean
 clean:
-	- $(RM) $(OBJS) *.Dict.cc *.Dict.h $(addsuffix .o, $(EXES)) $(EXES) $(DEPS) TestFile-*.root
+	- $(RM) $(OBJS) *.Dict.{h,cc} $(addsuffix .o, $(EXES)) $(EXES) $(DEPS) TestFile-*.root
 
 -include $(DEPS)

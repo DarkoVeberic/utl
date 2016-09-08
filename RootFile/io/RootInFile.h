@@ -1,18 +1,20 @@
-#ifndef _RootInFile_h_
-#define _RootInFile_h_
+#ifndef _io_RootInFile_h_
+#define _io_RootInFile_h_
 
 /*
   GPLv2 and 2C-BSD
   Copyright (c) Darko Veberic, 2014
 */
 
-#include "SaveCurrentTDirectory.h"
+#include <io/SaveCurrentTDirectory.h>
 #include <TChain.h>
 #include <TChainElement.h>
 #include <TFile.h>
 #include <string>
 #include <stdexcept>
 
+
+namespace io {
 
 template<class Entry>
 class RootInFile {
@@ -38,7 +40,7 @@ public:
       const
     {
       if (&fFile != &it.fFile)
-        throw std::logic_error("mixing iterators of different RootFiles");
+        throw std::logic_error("RootInFile::Iterator: mixing iterators of different RootFiles");
     }
 
     RootInFile& fFile;
@@ -50,6 +52,13 @@ public:
     fEntryBuffer(0)
   {
     Open(filename);
+  }
+
+  RootInFile(const std::vector<std::string>& filenames) :
+    fChain(0),
+    fEntryBuffer(0)
+  {
+    Open(filenames);
   }
 
   ~RootInFile() { Close(); }
@@ -66,7 +75,7 @@ public:
   {
     Check();
     if (!fChain->GetEntry(i))
-      throw std::out_of_range("no entry found");
+      throw std::out_of_range("RootInFile::operator[]: requested entry not found in file chain");
     return *fEntryBuffer;
   }
 
@@ -88,17 +97,14 @@ public:
   const T&
   Get()
   {
-    TObjArray* files;
-    if (!fChain || !(files = fChain->GetListOfFiles()))
-      Error("file not open");
-    const T* obj = 0;
-    TIter next(files);
-    for (TChainElement* c = (TChainElement*)next(); !obj && c; c = (TChainElement*)next())
-      TFile(c->GetTitle()).GetObject(T::Class_Name(), obj);
+    const T* obj = Find<T>();
     if (!obj)
-      Error((std::string("no object '") + T::Class_Name() + "' found in file").c_str());
+      Error((std::string("RootInFile::Get: no object '") + T::Class_Name() + "' found in file").c_str());
     return *obj;
   }
+
+  template<class T>
+  bool Has() { return Find<T>(); }
 
   void
   Close()
@@ -124,26 +130,51 @@ private:
   void
   Open(const std::string& filename)
   {
+    Open(std::vector<std::string>(1, filename));
+  }
+
+  void
+  Open(const std::vector<std::string>& filenames)
+  {
     const SaveCurrentTDirectory save;
     fChain = new TChain((std::string(Entry::Class_Name()) + "Tree").c_str());
-    const int nFiles = fChain->Add(filename.c_str());
+    int nFiles = 0;
+    for (std::vector<std::string>::const_iterator it = filenames.begin(),
+         end = filenames.end(); it != end; ++it)
+      nFiles += fChain->Add(it->c_str());
     if (!nFiles)
-      Error("no files found");
+      Error("RootInFile::Open: no files found");
     fEntryBuffer = new Entry;
     fChain->SetBranchAddress(Entry::Class_Name(), &fEntryBuffer);
     Check();
+  }
+
+  template<class T>
+  const T*
+  Find()
+  {
+    TObjArray* files;
+    if (!fChain || !(files = fChain->GetListOfFiles()))
+      Error("RootInFile::Find: file not open");
+    const T* obj = 0;
+    TIter next(files);
+    for (TChainElement* c = (TChainElement*)next(); !obj && c; c = (TChainElement*)next())
+      TFile(c->GetTitle()).GetObject(T::Class_Name(), obj);
+    return obj;
   }
 
   void
   Check()
   {
     if (!fChain || !fEntryBuffer)
-      Error("no entry found");
+      Error("RootInFile::Check: no entry found");
   }
 
   TChain* fChain;
   Entry* fEntryBuffer;
 };
+
+}
 
 
 #endif

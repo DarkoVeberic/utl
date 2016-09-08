@@ -1,17 +1,19 @@
-#ifndef _RootOutFile_h_
-#define _RootOutFile_h_
+#ifndef _io_RootOutFile_h_
+#define _io_RootOutFile_h_
 
 /*
   GPLv2 and 2C-BSD
   Copyright (c) Darko Veberic, 2014
 */
 
-#include "SaveCurrentTDirectory.h"
+#include <io/SaveCurrentTDirectory.h>
 #include <TFile.h>
 #include <TTree.h>
 #include <string>
 #include <stdexcept>
 
+
+namespace io {
 
 template<class Entry>
 class RootOutFile {
@@ -19,7 +21,6 @@ public:
   RootOutFile(const std::string& filename, const int compression = 1) :
     fFile(0),
     fTree(0),
-    fBranch(0),
     fEntryPtr(0)
   {
     Open(filename, compression);
@@ -100,9 +101,10 @@ private:
 
   TFile* fFile;
   TTree* fTree;
-  TBranch* fBranch;
   const Entry* fEntryPtr;
 };
+
+}
 
 
 #endif

@@ -6,4 +6,4 @@
 */
 
 
-ClassImp(TestClass);
+ClassImp(TestClass)

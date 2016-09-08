@@ -14,6 +14,9 @@
 
 #  pragma link C++ class TestClass+;
 #  pragma link C++ class AnotherTestClass+;
+#  pragma link C++ class Foo+;
+#  pragma link C++ class Bar+;
+#  pragma link C++ class Baz+;
 
 #endif
 
