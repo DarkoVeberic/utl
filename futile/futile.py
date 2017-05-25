@@ -15,74 +15,110 @@ def which(program):
     return None
 
 
+def open_pipe(command, mode='r', buff=1024*1024):
+    import subprocess
+    import signal
+    if 'r' in mode:
+        return subprocess.Popen(command, shell=True, bufsize=buff,
+                                stdout=subprocess.PIPE,
+                                preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+                               ).stdout
+    elif 'w' in mode:
+        return subprocess.Popen(command, shell=True, bufsize=buff,
+                                stdin=subprocess.PIPE).stdin
+    return None
+
+
 NORMAL = 0
 PROCESS = 1
 PARALLEL = 2
 
-# open pipe, zipped, or unzipped file automagically
+
+WHICH_BZIP2 = which("bzip2")
+WHICH_PBZIP2 = which("pbzip2")
+
+def open_bz2(filename, mode='r', buff=1024*1024, external=PARALLEL):
+    if external == None or external == NORMAL:
+        import bz2
+        return bz2.BZ2File(filename, mode, buff)
+    elif external == PROCESS:
+        if not WHICH_BZIP2:
+            return open_bz2(filename, mode, buff, NORMAL)
+        if 'r' in mode:
+            return open_pipe("bzip2 -dc " + filename, mode, buff)
+        elif 'w' in mode:
+            return open_pipe("bzip2 >" + filename, mode, buff)
+    elif external == PARALLEL:
+        if not WHICH_PBZIP2:
+            return open_bz2(filename, mode, buff, PROCESS)
+        if 'r' in mode:
+            return open_pipe("pbzip2 -dc " + filename, mode, buff)
+        elif 'w' in mode:
+            return open_pipe("pbzip2 >" + filename, mode, buff)
+    return None
+
+
+WHICH_GZIP = which("gzip")
+WHICH_PIGZ = which("pigz")
+
+def open_gz(filename, mode='r', buff=1024*1024, external=PARALLEL):
+    if external == None or external == NORMAL:
+        import gzip
+        return gzip.GzipFile(filename, mode, buff)
+    elif external == PROCESS:
+        if not WHICH_GZIP:
+            return open_gz(filename, mode, buff, NORMAL)
+        if 'r' in mode:
+            return open_pipe("gzip -dc " + filename, mode, buff)
+        elif 'w' in mode:
+            return open_pipe("gzip >" + filename, mode, buff)
+    elif external == PARALLEL:
+        if not WHICH_PIGZ:
+            return open_gz(filename, mode, buff, PROCESS)
+        if 'r' in mode:
+            return open_pipe("pigz -dc " + filename, mode, buff)
+        elif 'w' in mode:
+            return open_pipe("pigz >" + filename, mode, buff)
+    return None
+
+
+WHICH_XZ = which("xz")
+
+def open_xz(filename, mode='r', buff=1024*1024, external=PARALLEL):
+    if WHICH_XZ:
+        if 'r' in mode:
+            return open_pipe("xz -dc " + filename, mode, buff)
+        elif 'w' in mode:
+            return open_pipe("xz >" + filename, mode, buff)
+    return None
+
+
 def zopen(filename, mode='r', buff=1024*1024, external=PARALLEL):
+    """
+    Open pipe, zipped, or unzipped file automagically
+
     # external == 0: normal zip libraries
     # external == 1: (zcat, gzip) or (bzcat, bzip2)
     # external == 2: (pigz -dc, pigz) or (pbzip2 -dc, pbzip2)
+    """
     if 'r' in mode and 'w' in mode:
         return None
     if filename.startswith('!'):
-        import subprocess
-        if 'r' in mode:
-            return subprocess.Popen(filename[1:], shell=True, bufsize=buff,
-                                    stdout=subprocess.PIPE).stdout
-        elif 'w' in mode:
-            return subprocess.Popen(filename[1:], shell=True, bufsize=buff,
-                                    stdin=subprocess.PIPE).stdin
+        return open_pipe(filename[1:], mode, buff)
     elif filename.endswith('.bz2'):
-        if external == NORMAL:
-            import bz2
-            return bz2.BZ2File(filename, mode, buff)
-        elif external == PROCESS:
-            if not which('bzip2'):
-                return zopen(filename, mode, buff, NORMAL)
-            if 'r' in mode:
-                return zopen('!bzip2 -dc ' + filename, mode, buff)
-            elif 'w' in mode:
-                return zopen('!bzip2 >' + filename, mode, buff)
-        elif external == PARALLEL:
-            if not which('pbzip2'):
-                return zopen(filename, mode, buff, PROCESS)
-            if 'r' in mode:
-                return zopen('!pbzip2 -dc ' + filename, mode, buff)
-            elif 'w' in mode:
-                return zopen('!pbzip2 >' + filename, mode, buff)
+        return open_bz2(filename, mode, buff, external)
     elif filename.endswith('.gz'):
-        if external == NORMAL:
-            import gzip
-            return gzip.GzipFile(filename, mode, buff)
-        elif external == PROCESS:
-            if not which('gzip'):
-                return zopen(filename, mode, buff, NORMAL)
-            if 'r' in mode:
-                return zopen('!gzip -dc ' + filename, mode, buff)
-            elif 'w' in mode:
-                return zopen('!gzip >' + filename, mode, buff)
-        elif external == PARALLEL:
-            if not which('pigz'):
-                return zopen(filename, mode, buff, PROCESS)
-            if 'r' in mode:
-                return zopen('!pigz -dc ' + filename, mode, buff)
-            elif 'w' in mode:
-                return zopen('!pigz >' + filename, mode, buff)
+        return open_gz(filename, mode, buff, external)
     elif filename.endswith('.xz'):
-        if which('xz'):
-            if 'r' in mode:
-                return zopen('!xz -dc ' + filename, mode, buff)
-            elif 'w' in mode:
-                return zopen('!xz >' + filename, mode, buff)
+        return open_xz(filename, mode, buff, external)
     else:
         return open(filename, mode, buff)
     return None
 
 
-# add iterators to the pickle file so it can be used as a object container
 def pickle_loader(pklFile):
+    """ Add iterators to the pickle file so it can be used as a object container """
+
     import cPickle as pkl
     try:
         while True:
@@ -91,8 +127,12 @@ def pickle_loader(pklFile):
         pass
 
 
-# t is in seconds
 def nice_time(t):
+    """ Reformat a time period given as number of seconds to a human readable string
+
+    t is in seconds
+    """
+
     div = (60., 60., 24., 365.25)
     unit = ('', 's', 'min', 'h', 'day', 'year')
     sign = 1 if t >= 0 else -1
