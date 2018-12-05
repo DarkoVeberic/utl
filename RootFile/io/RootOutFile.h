@@ -1,3 +1,4 @@
+// $Id: RootOutFile.h 1568 2018-12-05 08:39:21Z darko $
 #ifndef _io_RootOutFile_h_
 #define _io_RootOutFile_h_
 
@@ -15,94 +16,98 @@
 
 namespace io {
 
-template<class Entry>
-class RootOutFile {
-public:
-  RootOutFile(const std::string& filename, const int compression = 1) :
-    fFile(0),
-    fTree(0),
-    fEntryPtr(0)
-  {
-    Open(filename, compression);
-  }
-
-  ~RootOutFile() { Close(); }
-
-  void
-  Fill(const Entry& entry)
-  {
-    fEntryPtr = &entry;
-    Check();
-    fTree->Fill();
-  }
-
-  void operator<<(const Entry& entry) { Fill(entry); }
-
-  template<class T>
-  void
-  Write(const T& obj)
-  {
-    if (!fFile)
-      Error("file not open");
-    fFile->WriteObject(&obj, obj.Class_Name());
-  }
-
-  void
-  Close()
-  {
-    if (fFile && fFile->IsWritable() && fTree) {
-      const SaveCurrentTDirectory save;
-      fFile->cd();
-      fTree->Write();
-      fFile->Close();
-      delete fFile;
-      fFile = 0;
-      //delete fTree;  // broken ROOT memory management
-      fTree = 0;
+  template<class Entry>
+  class RootOutFile {
+  public:
+    RootOutFile(const std::string& filename, const int compression = 1) :
+    {
+      Open(filename, compression);
     }
-    fEntryPtr = 0;
-  }
 
-private:
-  // prevent copying
-  RootOutFile(const RootOutFile&);
-  RootOutFile& operator=(const RootOutFile&);
+    ~RootOutFile() { Close(); }
 
-  void
-  Error(const char* const message)
-  {
-    Close();
-    throw std::runtime_error(message);
-  }
+    void
+    Fill(const Entry& entry)
+    {
+      fEntryPtr = &entry;
+      Check();
+      fTree->Fill();
+    }
 
-  void
-  Open(const std::string& filename, const int compression)
-  {
-    const SaveCurrentTDirectory save;
-    fFile = new TFile(filename.c_str(), "recreate", "", compression);
-    const std::string treeName = std::string(Entry::Class_Name()) + "Tree";
-    fTree = new TTree(treeName.c_str(), treeName.c_str());
-    fEntryPtr = 0;
-    fTree->Branch(Entry::Class_Name(), Entry::Class_Name(), &fEntryPtr, 900000);
-    Check();
-  }
+    void Fill(const std::vector<Entry>& entries)
+    { for (const Entry& e : entries) Fill(e); }
 
-  void
-  Check()
-  {
-    const char* err = 0;
-    if (!fFile || fFile->IsZombie() || !fFile->IsOpen())
-      err = "file open failed";
-    if (!fTree || !fEntryPtr)
-      err = "tree error";
-    if (err)
-      Error(err);
-  }
+    void operator<<(const Entry& entry) { Fill(entry); }
 
-  TFile* fFile;
-  TTree* fTree;
-  const Entry* fEntryPtr;
-};
+    template<class T>
+    void
+    Write(const T& obj)
+    {
+      if (!fFile)
+        Error("file not open");
+      fFile->WriteObject(&obj, obj.Class_Name());
+    }
+
+    void
+    Close()
+    {
+      if (fFile && fFile->IsWritable() && fTree) {
+        const SaveCurrentTDirectory save;
+        fFile->cd();
+        fTree->Write();
+        fFile->Close();
+        delete fFile;
+        fFile = 0;
+        //delete fTree;  // broken ROOT memory management
+        fTree = 0;
+      }
+      fEntryPtr = 0;
+    }
+
+    void SetMaxTreeSize(const Long64_t size) { fTree->SetMaxTreeSize(size); }
+
+    TFile& GetTFile() { return *fFile; }
+
+  private:
+    // prevent copying
+    RootOutFile(const RootOutFile&);
+    RootOutFile& operator=(const RootOutFile&);
+
+    void
+    Error(const char* const message)
+    {
+      Close();
+      throw std::runtime_error(message);
+    }
+
+    void
+    Open(const std::string& filename, const int compression)
+    {
+      const SaveCurrentTDirectory save;
+      fFile = new TFile(filename.c_str(), "recreate", "", compression);
+      const std::string treeName = std::string(Entry::Class_Name()) + "Tree";
+      fTree = new TTree(treeName.c_str(), treeName.c_str());
+      fEntryPtr = 0;
+      fTree->Branch(Entry::Class_Name(), Entry::Class_Name(), &fEntryPtr, 900000);
+      Check();
+    }
+
+    void
+    Check()
+    {
+      const char* err = 0;
+      if (!fFile || fFile->IsZombie() || !fFile->IsOpen())
+        err = "file open failed";
+      if (!fTree || !fEntryPtr)
+        err = "tree error";
+      if (err)
+        Error(err);
+    }
+
+    TFile* fFile = nullptr;
+    TTree* fTree = nullptr;
+    const Entry* fEntryPtr = nullptr;
+  };
 
 }
 
