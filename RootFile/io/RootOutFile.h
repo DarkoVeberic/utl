@@ -1,4 +1,4 @@
-// $Id: RootOutFile.h 1569 2018-12-05 09:25:15Z darko $
+// $Id: RootOutFile.h 1570 2018-12-05 12:30:48Z darko $
 #ifndef _io_RootOutFile_h_
 #define _io_RootOutFile_h_
 
@@ -13,6 +13,12 @@
 #include <string>
 #include <stdexcept>
 
+
+#ifdef IO_ROOTFILE_DEBUG
+#  define IO_ROOTFILE_CHECK Check()
+#else
+#  define IO_ROOTFILE_CHECK
+#endif
 
 namespace io {
 
@@ -30,7 +36,7 @@ namespace io {
     Fill(const Entry& entry)
     {
       fEntryPtr = &entry;
-      Check();
+      IO_ROOTFILE_CHECK;
       fTree->Fill();
     }
 
@@ -66,7 +72,9 @@ namespace io {
 
     void SetMaxTreeSize(const Long64_t size) { fTree->SetMaxTreeSize(size); }
 
-    TFile& GetTFile() { return *fFile; }
+    TFile& GetTFile() { IO_ROOTFILE_CHECK; return *fFile; }
+
+    TTree& GetTTree() { IO_ROOTFILE_CHECK; return *fTree; }
 
   private:
     // prevent copying

@@ -1,4 +1,4 @@
-// $Id: RootInFile.h 1568 2018-12-05 08:39:21Z darko $
+// $Id: RootInFile.h 1570 2018-12-05 12:30:48Z darko $
 #ifndef _io_RootInFile_h_
 #define _io_RootInFile_h_
 
@@ -15,10 +15,11 @@
 #include <limits>
 #include <stdexcept>
 
-#ifdef IO_ROOTINFILE_DEBUG
-#  define IO_ROOTINFILE_CHECK Check()
+
+#ifdef IO_ROOTFILE_DEBUG
+#  define IO_ROOTFILE_CHECK Check()
 #else
-#  define IO_ROOTINFILE_CHECK
+#  define IO_ROOTFILE_CHECK
 #endif
 
 namespace io {
@@ -77,27 +78,27 @@ namespace io {
     ULong64_t
     GetSize()
     {
-      IO_ROOTINFILE_CHECK;
+      IO_ROOTFILE_CHECK;
       return fChain->GetEntries();
     }
 
     const Entry&
     operator[](const ULong64_t i)
     {
-      IO_ROOTINFILE_CHECK;
+      IO_ROOTFILE_CHECK;
       if (i != fCurrentEntryIndex) {
         if (!fChain->GetEntry(i))
           throw std::out_of_range("RootInFile::operator[]: requested entry not found in file chain");
         fCurrentEntryIndex = i;
       }
-      IO_ROOTINFILE_CHECK;
+      IO_ROOTFILE_CHECK;
       return *fEntryBuffer;
     }
 
     Iterator
     Begin()
     {
-      IO_ROOTINFILE_CHECK;
+      IO_ROOTFILE_CHECK;
       return Iterator(*this, 0);
     }
 
@@ -106,7 +107,7 @@ namespace io {
     Iterator
     End()
     {
-      IO_ROOTINFILE_CHECK;
+      IO_ROOTFILE_CHECK;
       return Iterator(*this, GetSize());
     }
 
