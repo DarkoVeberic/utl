@@ -1,4 +1,4 @@
-// $Id: RootOutFile.h 1568 2018-12-05 08:39:21Z darko $
+// $Id: RootOutFile.h 1569 2018-12-05 09:25:15Z darko $
 #ifndef _io_RootOutFile_h_
 #define _io_RootOutFile_h_
 
@@ -19,7 +19,7 @@ namespace io {
   template<class Entry>
   class RootOutFile {
   public:
-    RootOutFile(const std::string& filename, const int compression = 1) :
+    RootOutFile(const std::string& filename, const int compression = 1)
     {
       Open(filename, compression);
     }
