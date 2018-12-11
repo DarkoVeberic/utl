@@ -53,6 +53,12 @@ for (RootInFile<Event>::Iterator it = ifile.Begin(), end = ifile.End();
   ...
 }
 ```
+or in C++11:
+```c++
+for (const auto& event : ifile) {
+  ...
+}
+```
 
 Note that the reading of the root file is instead of the
 [`TTree`](http://root.cern.ch/root/html/TTree.html) implemented with the
