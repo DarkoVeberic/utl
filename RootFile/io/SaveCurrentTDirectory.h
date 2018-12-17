@@ -1,5 +1,5 @@
-#ifndef _SaveCurrentDirectory_h_
-#define _SaveCurrentDirectory_h_
+#ifndef _io_SaveCurrentDirectory_h_
+#define _io_SaveCurrentDirectory_h_
 
 /*
   GPLv2 and 2C-BSD
@@ -12,6 +12,8 @@
 #include <TDirectory.h>
 
 
+namespace io {
+
 class SaveCurrentTDirectory {
 public:
   SaveCurrentTDirectory() : fDirectory(gDirectory) { }
@@ -21,6 +23,8 @@ public:
 private:
   TDirectory* const fDirectory;
 };
+
+}
 
 
 #endif

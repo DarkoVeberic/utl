@@ -1,4 +1,4 @@
-// $Id: RootInFile.h 1570 2018-12-05 12:30:48Z darko $
+// $Id: RootInFile.h 1576 2018-12-17 15:26:42Z darko $
 #ifndef _io_RootInFile_h_
 #define _io_RootInFile_h_
 
@@ -33,8 +33,8 @@ namespace io {
         std::input_iterator_tag,
         Entry,
         std::ptrdiff_t,
-        const Entry*,
-        const Entry&
+        Entry*,
+        Entry&
       > {
     public:
       typedef Iterator self_type;
@@ -46,8 +46,8 @@ namespace io {
 
       Iterator(RootInFile& file, const ULong64_t index) : fFile(file), fIndex(index) { }
       Iterator& operator++() { ++fIndex; return *this; } // prefix ++it
-      const Entry& operator*() { return fFile[fIndex]; }
-      const Entry* operator->() { return &operator*(); }
+      Entry& operator*() { return fFile[fIndex]; }
+      Entry* operator->() { return &operator*(); }
       bool operator==(const Iterator& it) const { IsSameFile(it); return fIndex == it.fIndex; }
       bool operator!=(const Iterator& it) const { IsSameFile(it); return !operator==(it); }
     private:
@@ -82,7 +82,7 @@ namespace io {
       return fChain->GetEntries();
     }
 
-    const Entry&
+    Entry&
     operator[](const ULong64_t i)
     {
       IO_ROOTFILE_CHECK;
@@ -116,10 +116,10 @@ namespace io {
     std::vector<Entry> ReadAll() { return std::vector<Entry>(begin(), end()); }
 
     template<class T>
-    const T&
+    T&
     Get(const std::string& name = T::Class_Name())
     {
-      const T* obj = Find<T>(name);
+      T* obj = Find<T>(name);
       if (!obj)
         Error(("RootInFile::Get: no object '" + name + "' found in file").c_str());
       return *obj;
@@ -175,13 +175,13 @@ namespace io {
     }
 
     template<class T>
-    const T*
+    T*
     Find(const std::string& name)
     {
       TObjArray* files;
       if (!fChain || !(files = fChain->GetListOfFiles()))
         Error("RootInFile::Find: file not open");
-      const T* obj = nullptr;
+      T* obj = nullptr;
       TIter next(files);
       for (TChainElement* c = (TChainElement*)next(); !obj && c; c = (TChainElement*)next())
         TFile(c->GetTitle()).GetObject(name.c_str(), obj);
