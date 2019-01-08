@@ -103,13 +103,10 @@ namespace io {
     void
     Check()
     {
-      const char* err = 0;
       if (!fFile || fFile->IsZombie() || !fFile->IsOpen())
-        err = "file open failed";
+        Error("file open failed");
       if (!fTree || !fEntryPtr)
-        err = "tree error";
-      if (err)
-        Error(err);
+        Error("tree error");
     }
 
     TFile* fFile = nullptr;
