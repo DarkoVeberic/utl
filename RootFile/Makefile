@@ -12,18 +12,19 @@ CXXFLAGS := -Wall -Wextra -ggdb3 -O2 -fPIC -pipe
 LDFLAGS := $(CXXFLAGS) $(shell $(ROOTSYS)/bin/root-config --ldflags --libs)
 
 SHELL := bash
-SUFFIXES := .o .cc .cxx
 
 VPATH := . io
 
 EXES := $(basename $(wildcard *.cxx))
 OBJS := $(foreach d, $(VPATH), $(patsubst %.cc, %.o, $(wildcard $(d)/*.cc)))
 
-LINKDEFS := $(patsubst %.LinkDef.h, %, $(wildcard *.LinkDef.h))
+LINKDEFS := $(foreach d, $(VPATH), $(patsubst %.LinkDef.h, %, $(wildcard $(d)/*.LinkDef.h)))
 OBJS += $(addsuffix .Dict.o, $(LINKDEFS))
 .PRECIOUS: $(addsuffix .Dict.h, $(LINKDEFS)) $(addsuffix .Dict.cc, $(LINKDEFS))
 
-DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix .P, $(EXES))
+DEPS := $(patsubst %.o, %.P, $(OBJS)) $(addsuffix .P, $(EXES)) $(addsuffix .Dict.cc.P, $(LINKDEFS))
+
+CLEANUP := $(OBJS) $(addsuffix .o, $(EXES)) $(EXES) $(DEPS) $(foreach d, $(VPATH), $(wildcard $(d)/*.Dict.h $(d)/*.Dict.cc $(d)/*.Dict_rdict.pcm))
 
 define cxx_compile_with_dependency_creation
   $(COMPILE.cc) -MD -o $@ $<
@@ -46,7 +47,12 @@ endef
 	$(call cxx_link_rule)
 
 %.Dict.cc %.Dict.h: %.h %.LinkDef.h
-	$(ROOTSYS)/bin/rootcint -v4 -f $@ -c -I. $^
+	@$(COMPILE.cc) -MM -MF $@.d $<
+	@sed -e 's|.*:|$@:|' <$@.d >$@.P
+	@sed -e 's/.*://' -e 's/\\$$//' <$@.d | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >>$@.P
+	@rm -f $@.d
+	$(ROOTSYS)/bin/rootcint -f $@ -c -p -I. $*.h $*.LinkDef.h
+	@cp $(dir $*)*.Dict_rdict.pcm . || true
 
 .PHONY: all
 all: $(EXES)
@@ -59,6 +65,6 @@ check: $(basename $(wildcard test_*.cxx))
 
 .PHONY: clean
 clean:
-	- $(RM) $(OBJS) *.Dict.{h,cc} $(addsuffix .o, $(EXES)) $(EXES) $(DEPS) TestFile-*.root
+	-$(RM) $(CLEANUP) TestFile-*.root
 
 -include $(DEPS)
