@@ -249,5 +249,6 @@ plt.gca().yaxis.set_minor_formatter(plt.NullFormatter())
 
 plt.subplots_adjust(left=0.1, bottom=0.14, right=0.995, top=0.995)
 
-plt.savefig('exclusion_limit-all')
+plt.savefig('exclusion_limit-all.pdf')
+plt.savefig('exclusion_limit-all.png', dpi=200)
 plt.close()
