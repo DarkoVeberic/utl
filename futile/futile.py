@@ -130,13 +130,22 @@ def open_xz(filename, mode='r', buff=1024*1024, external=PARALLEL):
 def zopen(filename, mode='r', buff=1024*1024, external=PARALLEL):
     """
     Open pipe, zipped, or unzipped file automagically.
+    Example:
+      with futile.zopen("file.txt.bz2") as f:
     Additionally support the Mathematica leading bang notation
     (filename starts with "!") for executing commands in a pipe
     and making their output available.
+    Example:
+      with futile.zopen("!date | sed 's/Jan/January/'")
 
-    # external == 0: normal zip libraries
-    # external == 1: (zcat, gzip) or (bzcat, bzip2) or xz
-    # external == 2: pigz or pbzip2 or xz
+    Parameters:
+      external == futile.NORMAL:
+        normal zip libraries from python packages
+      external == futile.EXTERNAL:
+        (zcat, gzip) or (bzcat, bzip2) or xz external commands
+      external == futile.PARALLEL: (default)
+        pigz or pbzip2 or xz parallel versions of external
+        commands
     """
     if 'r' in mode and 'w' in mode:
         return None
@@ -152,7 +161,9 @@ def zopen(filename, mode='r', buff=1024*1024, external=PARALLEL):
 
 
 def pickle_loader(pklFile):
-    """ Add iterators to the pickle file so it can be used as a object container """
+    """
+    Add iterators to the pickle file so it can be used as a object container
+    """
     import pickle as pkl
     try:
         while True:
@@ -162,9 +173,9 @@ def pickle_loader(pklFile):
 
 
 def nice_time(t):
-    """ Reformat a time period given as number of seconds to a human readable string
-
-    t is in seconds
+    """
+    Reformat a time period given as number of seconds to a human readable
+    string, t is in seconds
     """
     div = (60, 60, 24, 365.25)
     unit = ('', 's', 'min', 'h', 'day', 'year')
