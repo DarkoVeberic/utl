@@ -3,7 +3,7 @@
 __author__ = ("Darko Veberic", "Philipp Meder")
 __copyright__ = "Copyright (C) 2021 Darko Veberic"
 __license__ = "GPLv3"
-__version__ = "1.2"
+__version__ = "1.3"
 
 
 def open_pipe(command, mode="r", buff=1024*1024):
@@ -23,6 +23,13 @@ def open_pipe(command, mode="r", buff=1024*1024):
         def __exit__(self, exc_type, exc_val, exc_tb):
             if self.stdin:
                 self.stdin.close()
+            if exc_type is not None:
+                # An exception occurred: terminate the subprocess so it stops
+                # trying to write into the pipe, then drain any buffered output
+                # to avoid a deadlock on the pipe buffer.
+                self.terminate()
+                if self.stdout:
+                    self.stdout.read()  # drain remaining output
             self.wait()
             return False
 
@@ -122,7 +129,10 @@ def open_xz(filename, mode='r', buff=1024*1024, external=PARALLEL):
 
 def zopen(filename, mode='r', buff=1024*1024, external=PARALLEL):
     """
-    Open pipe, zipped, or unzipped file automagically
+    Open pipe, zipped, or unzipped file automagically.
+    Additionally support the Mathematica leading bang notation
+    (filename starts with "!") for executing commands in a pipe
+    and making their output available.
 
     # external == 0: normal zip libraries
     # external == 1: (zcat, gzip) or (bzcat, bzip2) or xz
